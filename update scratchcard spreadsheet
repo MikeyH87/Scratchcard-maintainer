@@ -1,0 +1,157 @@
+Sub UpdateScratchcard()
+'
+' Macro1 Macro
+'
+'open up and set the relevant spreadsheets
+Application.ScreenUpdating = False
+Dim wbTemp As Workbook
+Dim wb1 As Excel.Workbook  'this workbook
+Set wb1 = Workbooks("LIVE GAMES AND CURRENT GAME CLOSURE ONLY 120416.xlsm")
+LastColofSourceSheet = ActiveSheet.UsedRange.Columns.Count
+Dim wb2 As Excel.Workbook  'the scratchcard info book
+Set wb2 = Workbooks.Open("\\watntfile01\Shared\Hotline\Scratchcard Information\Scratchcard Information1.xls", False, False, , , "SweetMI", True)
+LastrowofScratch = ActiveSheet.UsedRange.Rows.Count
+Column = 2
+Dim PackSize1 As String
+Dim PackSize2 As String
+
+
+For Col = 1 To LastColofSourceSheet
+Range(Cells(30, Column), Cells(30, Column)).Select
+ActiveCell.FormulaR1C1 = _
+        "=IF(LEFT(R[-28]C,1)=""*"",RIGHT(R[-28]C,LEN(R[-28]C)-10),IFERROR(LEFT(R[-28]C,IFERROR(FIND(""("",R[-28]C,1)-1,FIND(""*"",R[-28]C,1))-1),R[-28]C))"
+
+
+Range(Cells(31, Column), Cells(31, Column)).Select
+ActiveCell.FormulaR1C1 = _
+        "=IF(ISNUMBER(FIND(""PRIZE CLAIMED"",R[-26]C,1)),""Claimed"","""")"
+
+Range(Cells(32, Column), Cells(32, Column)).Select
+ActiveCell.FormulaR1C1 = _
+        "=IF(ISNUMBER(FIND(""PRIZE CLAIMED"",R[-2]C,1)),""Claimed"","""")"
+    
+Column = Column + 1
+Next
+
+Column = 2
+
+
+For TopLoop = 1 To LastColofSourceSheet
+wb1.Activate
+    
+        Range(Cells(3, Column), Cells(3, Column)).Select
+        x = Selection.Value
+
+wb2.Activate
+            Dim i As Integer, intValueToFind As Integer
+                intValueToFind = x
+                For i = 1 To LastrowofScratch + 10
+                Cells(i, 2).Select
+                    If Cells(i, 2).Value = intValueToFind Then
+                        ' *******this needs to copy the  cells info into the scratchcard doc*******
+                        'STEP 1 copy the end validation date across
+                        
+                 wb1.Activate
+                 GameNo = Range(Cells(3, Column), Cells(3, Column)).Value
+                 GameName = Range(Cells(32, Column), Cells(32, Column)).Value
+                 PackSize1 = "£" & Range(Cells(6, Column), Cells(6, Column)).Value
+                 PackSize2 = Range(Cells(4, Column), Cells(4, Column)).Value
+                 
+                 LastTopPrizeWon = Range(Cells(31, Column), Cells(31, Column)).Value
+                 If IsEmpty(LastTopPrizeWon) Then
+                 LastTopPrizeWon = "No"
+                 Else
+                 LastTopPrizeWon = "Yes"
+                 End If
+                 
+                 LastActivationDate = Range(Cells(15, Column), Cells(15, Column)).Value
+                 CloseDate = Range(Cells(16, Column), Cells(16, Column)).Value
+                 LastValidationDate = Range(Cells(19, Column), Cells(19, Column)).Value
+                
+               'Everythings collected, now update the sheet where the info has been found
+               
+                 wb2.Activate
+                        Range(Cells(i, 2), Cells(i, 2)) = GameNo
+                        Range(Cells(i, 3), Cells(i, 3)).Select
+                        ActiveCell.Formula = "=HYPERLINK(""https://www.national-lottery.co.uk/games/gamestore/scratchcards?icid=ga-ga-141:bd:8:sgp:gs:scr:in:co"",""" & GameName & """)"
+                       'Cells(i, 5).value = PackSize1.value&" "&Packsize2.value
+                        Cells(i, 7).Value = LastTopPrizeWon
+                        Cells(i, 9).Value = LastActivationDate
+                        Cells(i, 10).Value = CloseDate
+                        Cells(i, 11).Value = LastValidationDate
+                        
+                        
+                        Exit For
+                    End If
+           
+                Next i
+               
+                If i > LastrowofScratch Then
+                GoTo a:
+                End If
+                Column = Column + 1
+Next TopLoop
+If TopLoop > LastColofSourceSheet Then
+Range(Cells(30, 2), Cells(32, LastColofSourceSheet)).Clear
+
+ActiveWorkbook.Close True
+Exit Sub
+Else
+a:
+    ' This MsgBox will only show if the loop completes with no success
+    MsgBox ("Game number " & x & " not found in the range!")
+    
+    answer = MsgBox("do you want to create a new entry for this game?", vbYesNo + vbQuestion, "Create new game?")
+
+If answer = vbYes Then
+    'go into the other sheet, find the last row and get the game ID (etc) in there
+ wb1.Activate
+                 GameNo = Range(Cells(3, Column), Cells(3, Column)).Value
+                 GameName = Range(Cells(32, Column), Cells(32, Column)).Value
+                 PackSize1 = "£" & Range(Cells(6, Column), Cells(6, Column)).Value
+                 PackSize2 = Range(Cells(4, Column), Cells(4, Column)).Value
+                 
+                 LastTopPrizeWon = Range(Cells(20, Column), Cells(20, Column)).Value
+                 If IsEmpty(LastTopPrizeWon) Then
+                 LastTopPrizeWon = "No"
+                 Else
+                 LastTopPrizeWon = "Yes"
+                 End If
+                 
+                 LastActivationDate = Range(Cells(15, Column), Cells(15, Column)).Value
+                 CloseDate = Range(Cells(16, Column), Cells(16, Column)).Value
+                 LastValidationDate = Range(Cells(19, Column), Cells(19, Column)).Value
+                
+
+wb2.Activate
+
+
+Range("B10").Select
+
+    ActiveCell.EntireRow.Insert
+
+Range("B10") = GameNo
+                        Range("C10").Select
+                        ActiveCell.Formula = "=HYPERLINK(""https://www.national-lottery.co.uk/games/gamestore/scratchcards?icid=ga-ga-141:bd:8:sgp:gs:scr:in:co"",""" & GameName & """)"
+                       ' Range.Formula = "=HYPERLINK(""https://www.national-lottery.co.uk/games/gamestore/scratchcards?icid=ga-ga-141:bd:8:sgp:gs:scr:in:co"",GameName)"
+                        'Cells(g, 5).value = PackSize1.value&" "&Packsize2.value
+                        Range("G10").Value = LastTopPrizeWon
+                        Range("I10").Value = LastActivationDate
+                         Range("J10").Value = CloseDate
+                         Range("K10").Value = LastValidationDate
+                        
+
+ActiveWorkbook.Close True
+    
+Else
+   MsgBox ("Please ammend the entry before saving")
+End If
+End If
+
+
+Range(Cells(30, 2), Cells(32, LastColofSourceSheet)).Clear
+
+Application.ScreenUpdating = True
+
+    
+End Sub
